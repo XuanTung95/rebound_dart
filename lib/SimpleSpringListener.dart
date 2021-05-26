@@ -8,22 +8,37 @@
  *
  */
 
-package com.facebook.rebound;
+// package com.facebook.rebound;
 
-public class SimpleSpringListener implements SpringListener {
-  @Override
-  public void onSpringUpdate(Spring spring) {
+import 'package:rebound_dart/Spring.dart';
+import 'package:rebound_dart/SpringListener.dart';
+
+class SimpleSpringListener implements SpringListener {
+  final Function(Spring spring)? updateCallback;
+  final Function(Spring spring)? atRestCallback;
+  final Function(Spring spring)? activateCallback;
+  final Function(Spring spring)? endStateChangeCallback;
+
+  SimpleSpringListener({this.updateCallback, this.atRestCallback, this.activateCallback, this.endStateChangeCallback});
+
+
+  // @Override
+  void onSpringUpdate(Spring spring) {
+    updateCallback?.call(spring);
   }
 
-  @Override
-  public void onSpringAtRest(Spring spring) {
+  //@Override
+  void onSpringAtRest(Spring spring) {
+    atRestCallback?.call(spring);
   }
 
-  @Override
-  public void onSpringActivate(Spring spring) {
+  //@Override
+  void onSpringActivate(Spring spring) {
+    activateCallback?.call(spring);
   }
 
-  @Override
-  public void onSpringEndStateChange(Spring spring) {
+  //@Override
+  void onSpringEndStateChange(Spring spring) {
+    endStateChangeCallback?.call(spring);
   }
 }

@@ -8,25 +8,25 @@
  *
  */
 
-package com.facebook.rebound;
+// package com.facebook.rebound;
+import 'package:rebound_dart/BouncyConversion.dart';
+import 'package:rebound_dart/OrigamiValueConverter.dart';
 
 /**
  * Data structure for storing spring configuration.
  */
-public class SpringConfig {
-  public double friction;
-  public double tension;
+class SpringConfig {
+  double friction;
+  double tension;
 
-  public static SpringConfig defaultConfig = SpringConfig.fromOrigamiTensionAndFriction(40, 7);
+  static SpringConfig defaultConfig = SpringConfig.fromOrigamiTensionAndFriction(40, 7);
 
   /**
    * constructor for the SpringConfig
    * @param tension tension value for the SpringConfig
    * @param friction friction value for the SpringConfig
    */
-  public SpringConfig(double tension, double friction) {
-    this.tension = tension;
-    this.friction = friction;
+  SpringConfig(double tension, double friction): this.tension = tension, this.friction = friction {
   }
 
   /**
@@ -35,7 +35,7 @@ public class SpringConfig {
    * @param qcFriction friction as defined in the Quartz Composition
    * @return a SpringConfig that maps to these values
    */
-  public static SpringConfig fromOrigamiTensionAndFriction(double qcTension, double qcFriction) {
+  static SpringConfig fromOrigamiTensionAndFriction(double qcTension, double qcFriction) {
     return new SpringConfig(
         OrigamiValueConverter.tensionFromOrigamiValue(qcTension),
         OrigamiValueConverter.frictionFromOrigamiValue(qcFriction)
@@ -49,7 +49,7 @@ public class SpringConfig {
    * @param speed speed of the POP Animation
    * @return a SpringConfig mapping to the specified POP Animation values.
    */
-  public static SpringConfig fromBouncinessAndSpeed(double bounciness, double speed) {
+  static SpringConfig fromBouncinessAndSpeed(double bounciness, double speed) {
     BouncyConversion bouncyConversion = new BouncyConversion(speed, bounciness);
     return fromOrigamiTensionAndFriction(
         bouncyConversion.getBouncyTension(),

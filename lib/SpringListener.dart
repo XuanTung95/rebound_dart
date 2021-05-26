@@ -8,9 +8,10 @@
  *
  */
 
-package com.facebook.rebound;
+//package com.facebook.rebound;
+import 'package:rebound_dart/Spring.dart';
 
-public interface SpringListener {
+abstract class SpringListener {
 
   /**
    * called whenever the spring is updated

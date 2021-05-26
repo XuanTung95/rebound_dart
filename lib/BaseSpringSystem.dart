@@ -8,16 +8,13 @@
  *
  */
 
-package com.facebook.rebound;
+// package com.facebook.rebound;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
+//import java.util.concurrent.CopyOnWriteArraySet;
+
+import 'package:rebound_dart/Spring.dart';
+import 'package:rebound_dart/SpringLooper.dart';
+import 'package:rebound_dart/SpringSystemListener.dart';
 
 /**
  * BaseSpringSystem maintains the set of springs within an Application context. It is responsible for
@@ -25,23 +22,23 @@ import java.util.concurrent.CopyOnWriteArraySet;
  * In addition to listening to physics events on the individual Springs in the system, listeners
  * can be added to the BaseSpringSystem itself to provide pre and post integration setup.
  */
-public class BaseSpringSystem {
+class BaseSpringSystem {
 
-  private final Map<String, Spring> mSpringRegistry = new HashMap<String, Spring>();
-  private final Set<Spring> mActiveSprings = new CopyOnWriteArraySet<Spring>();
-  private final SpringLooper mSpringLooper;
-  private final CopyOnWriteArraySet<SpringSystemListener> mListeners = new CopyOnWriteArraySet<SpringSystemListener>();
-  private boolean mIdle = true;
+  final Map<String, Spring> mSpringRegistry = new Map<String, Spring>();
+  final Set<Spring> mActiveSprings = Set(); //new CopyOnWriteArraySet<Spring>();
+  late final SpringLooper mSpringLooper;
+  final Set<SpringSystemListener> mListeners = Set(); //new CopyOnWriteArraySet<SpringSystemListener>();
+  bool mIdle = true;
 
   /**
    * create a new BaseSpringSystem
    * @param springLooper parameterized springLooper to allow testability of the
    *        physics loop
    */
-  public BaseSpringSystem(SpringLooper springLooper) {
-    if (springLooper == null) {
-      throw new IllegalArgumentException("springLooper is required");
-    }
+  BaseSpringSystem(SpringLooper springLooper) {
+    /*if (springLooper == null) {
+      throw new Exception("springLooper is required");
+    }*/
     mSpringLooper = springLooper;
     mSpringLooper.setSpringSystem(this);
   }
@@ -50,7 +47,7 @@ public class BaseSpringSystem {
    * check if the system is idle
    * @return is the system idle
    */
-  public boolean getIsIdle() {
+  bool getIsIdle() {
     return mIdle;
   }
 
@@ -58,7 +55,7 @@ public class BaseSpringSystem {
    * create a spring with a random uuid for its name.
    * @return the spring
    */
-  public Spring createSpring() {
+  Spring createSpring() {
     Spring spring = new Spring(this);
     registerSpring(spring);
     return spring;
@@ -69,26 +66,27 @@ public class BaseSpringSystem {
    * @param id id of the spring to retrieve
    * @return Spring with the specified key
    */
-  public Spring getSpringById(String id) {
-    if (id == null) {
-      throw new IllegalArgumentException("id is required");
-    }
-    return mSpringRegistry.get(id);
+  Spring? getSpringById(String id) {
+    /*if (id == null) {
+      throw new Exception("id is required");
+    }*/
+    return mSpringRegistry[id];
   }
 
   /**
    * return all the springs in the simulator
    * @return all the springs
    */
-  public List<Spring> getAllSprings() {
-    Collection<Spring> collection = mSpringRegistry.values();
-    List<Spring> list;
-    if (collection instanceof List) {
+  List<Spring> getAllSprings() {
+    Iterable<Spring> collection = mSpringRegistry.values;
+    List<Spring> list = collection.toList();
+    return list;
+    /*if (collection instanceof List) {
       list = (List<Spring>)collection;
     } else {
       list = new ArrayList<Spring>(collection);
     }
-    return Collections.unmodifiableList(list);
+    return Collections.unmodifiableList(list);*/
   }
 
   /**
@@ -96,12 +94,12 @@ public class BaseSpringSystem {
    * @param spring the Spring to register
    */
   void registerSpring(Spring spring) {
-    if (spring == null) {
-      throw new IllegalArgumentException("spring is required");
-    }
+    /*if (spring == null) {
+      throw new Exception("spring is required");
+    }*/
     if (mSpringRegistry.containsKey(spring.getId())) {
-      throw new IllegalArgumentException("spring is already registered"); }
-    mSpringRegistry.put(spring.getId(), spring);
+      throw new Exception("spring is already registered"); }
+    mSpringRegistry[spring.getId()] = spring;
   }
 
   /**
@@ -111,9 +109,9 @@ public class BaseSpringSystem {
    * @param spring the Spring to deregister
    */
   void deregisterSpring(Spring spring) {
-    if (spring == null) {
-      throw new IllegalArgumentException("spring is required");
-    }
+    /*if (spring == null) {
+      throw new Exception("spring is required");
+    }*/
     mActiveSprings.remove(spring);
     mSpringRegistry.remove(spring.getId());
   }
@@ -123,29 +121,31 @@ public class BaseSpringSystem {
    * @param deltaTime delta since last update in millis
    */
   void advance(double deltaTime) {
-    for (Spring spring : mActiveSprings) {
+    List toRemove = [];
+    for (Spring spring in mActiveSprings) {
       // advance time in seconds
       if (spring.systemShouldAdvance()) {
         spring.advance(deltaTime / 1000.0);
       } else {
-        mActiveSprings.remove(spring);
+        toRemove.add(spring);
       }
     }
+    if (toRemove.isNotEmpty) mActiveSprings.removeAll(toRemove);
   }
 
   /**
    * loop the system until idle
    * @param elapsedMillis elapsed milliseconds
    */
-  public void loop(double elapsedMillis) {
-    for (SpringSystemListener listener : mListeners) {
+  void loop(double elapsedMillis) {
+    for (SpringSystemListener listener in mListeners) {
       listener.onBeforeIntegrate(this);
     }
     advance(elapsedMillis);
-    if (mActiveSprings.isEmpty()) {
+    if (mActiveSprings.isEmpty) {
       mIdle = true;
     }
-    for (SpringSystemListener listener : mListeners) {
+    for (SpringSystemListener listener in mListeners) {
       listener.onAfterIntegrate(this);
     }
     if (mIdle) {
@@ -160,9 +160,9 @@ public class BaseSpringSystem {
    * @param springId the id of the Spring to be activated
    */
   void activateSpring(String springId) {
-    Spring spring = mSpringRegistry.get(springId);
+    Spring? spring = mSpringRegistry[springId];
     if (spring == null) {
-      throw new IllegalArgumentException("springId " + springId + " does not reference a registered spring");
+      throw new Exception("springId " + springId + " does not reference a registered spring");
     }
     mActiveSprings.add(spring);
     if (getIsIdle()) {
@@ -177,10 +177,10 @@ public class BaseSpringSystem {
    * Add new listener object.
    * @param newListener listener
    */
-  public void addListener(SpringSystemListener newListener) {
-    if (newListener == null) {
-      throw new IllegalArgumentException("newListener is required");
-    }
+  void addListener(SpringSystemListener newListener) {
+    /*if (newListener == null) {
+      throw new Exception("newListener is required");
+    }*/
     mListeners.add(newListener);
   }
 
@@ -188,17 +188,17 @@ public class BaseSpringSystem {
    * Remove listener object.
    * @param listenerToRemove listener
    */
-  public void removeListener(SpringSystemListener listenerToRemove) {
-    if (listenerToRemove == null) {
-      throw new IllegalArgumentException("listenerToRemove is required");
-    }
+  void removeListener(SpringSystemListener listenerToRemove) {
+    /*if (listenerToRemove == null) {
+      throw new Exception("listenerToRemove is required");
+    }*/
     mListeners.remove(listenerToRemove);
   }
 
   /**
    * Remove all listeners.
    */
-  public void removeAllListeners() {
+  void removeAllListeners() {
     mListeners.clear();
   }
 }

@@ -8,20 +8,22 @@
  *
  */
 
-package com.facebook.rebound;
+//package com.facebook.rebound;
+
+import 'package:rebound_dart/BaseSpringSystem.dart';
 
 /**
  * The spring looper is an interface for implementing platform-dependent run loops.
  */
-public abstract class SpringLooper {
+abstract class SpringLooper {
 
-  protected BaseSpringSystem mSpringSystem;
+  BaseSpringSystem? mSpringSystem;
 
   /**
    * Set the BaseSpringSystem that the SpringLooper will call back to.
    * @param springSystem the spring system to call loop on.
    */
-  public void setSpringSystem(BaseSpringSystem springSystem) {
+  void setSpringSystem(BaseSpringSystem springSystem) {
     mSpringSystem = springSystem;
   }
 
@@ -31,10 +33,12 @@ public abstract class SpringLooper {
    * {@link #stop()} is called.
    * If an existing {@link Runnable} had been started on this looper, it will be cancelled.
    */
-  public abstract void start();
+  void start();
 
   /**
    * The looper will no longer run the {@link Runnable}.
    */
-  public abstract void stop();
+  void stop();
+
+  void dispose();
 }

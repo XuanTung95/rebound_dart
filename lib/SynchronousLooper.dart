@@ -7,40 +7,43 @@
  *  of patent rights can be found in the PATENTS file in the same directory.
  */
 
-package com.facebook.rebound;
+// package com.facebook.rebound;
 
-public class SynchronousLooper extends SpringLooper {
+import 'package:rebound_dart/SpringLooper.dart';
 
-  public static final double SIXTY_FPS = 16.6667;
-  private double mTimeStep;
-  private boolean mRunning;
+class SynchronousLooper extends SpringLooper {
 
-  public SynchronousLooper() {
-    mTimeStep = SIXTY_FPS;
-  }
+  static final double SIXTY_FPS = 16.6667;
+  double mTimeStep = SIXTY_FPS;
+  bool mRunning = false;
 
-  public double getTimeStep() {
+  SynchronousLooper();
+
+  double getTimeStep() {
     return mTimeStep;
   }
 
-  public void setTimeStep(double timeStep) {
+  void setTimeStep(double timeStep) {
     mTimeStep = timeStep;
   }
 
-  @Override
-  public void start() {
+  //@Override
+  void start() {
     mRunning = true;
-    while (!mSpringSystem.getIsIdle()) {
+    while (!mSpringSystem!.getIsIdle()) {
       if (mRunning == false) {
         break;
       }
-      mSpringSystem.loop(mTimeStep);
+      mSpringSystem!.loop(mTimeStep);
     }
   }
 
-  @Override
-  public void stop() {
+  //@Override
+  void stop() {
     mRunning = false;
+  }
+
+  void dispose(){
   }
 }
 

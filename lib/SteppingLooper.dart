@@ -7,32 +7,38 @@
  *  of patent rights can be found in the PATENTS file in the same directory.
  */
 
-package com.facebook.rebound;
+// package com.facebook.rebound;
 
-public class SteppingLooper extends SpringLooper {
+import 'package:rebound_dart/SpringLooper.dart';
 
-  private boolean mStarted;
-  private long mLastTime;
+class SteppingLooper extends SpringLooper {
 
-  @Override
-  public void start() {
+  bool mStarted = false;
+  int mLastTime = 0;
+
+  // @Override
+  void start() {
     mStarted = true;
     mLastTime = 0;
   }
 
-  public boolean step(long interval) {
+  bool step(int interval) {
     if (mSpringSystem == null || !mStarted) {
       return false;
     }
-    long currentTime = mLastTime + interval;
-    mSpringSystem.loop(currentTime);
+    int currentTime = mLastTime + interval;
+    mSpringSystem!.loop(currentTime.toDouble());
     mLastTime = currentTime;
-    return mSpringSystem.getIsIdle();
+    return mSpringSystem!.getIsIdle();
   }
 
-  @Override
-  public void stop() {
+  // @Override
+  void stop() {
     mStarted = false;
+  }
+
+  void dispose(){
+
   }
 }
 

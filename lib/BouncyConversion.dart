@@ -8,74 +8,76 @@
  *
  */
 
-package com.facebook.rebound;
+//package com.facebook.rebound;
+import 'dart:math';
 
 /**
  * This class converts values from the Quartz Composer Bouncy patch into Bouncy QC tension and
  * friction values.
  */
-public class BouncyConversion {
+class BouncyConversion {
 
-  private final double mBouncyTension;
-  private final double mBouncyFriction;
-  private final double mSpeed;
-  private final double mBounciness;
+  late final double mBouncyTension;
+  late final double mBouncyFriction;
+  late final double mSpeed;
+  late final double mBounciness;
 
-  public BouncyConversion(double speed, double bounciness) {
+
+  BouncyConversion(double speed, double bounciness) {
     mSpeed = speed;
     mBounciness = bounciness;
-    double b = normalize(bounciness / 1.7, 0, 20.);
+    double b = normalize(bounciness / 1.7, 0, 20.0);
     b = project_normal(b, 0.0, 0.8);
-    double s = normalize(speed / 1.7, 0, 20.);
+    double s = normalize(speed / 1.7, 0, 20.0);
     mBouncyTension = project_normal(s, 0.5, 200);
     mBouncyFriction = quadratic_out_interpolation(b, b3_nobounce(mBouncyTension), 0.01);
   }
 
-  public double getSpeed() {
+  double getSpeed() {
     return mSpeed;
   }
 
-  public double getBounciness() {
+  double getBounciness() {
     return mBounciness;
   }
 
-  public double getBouncyTension() {
+  double getBouncyTension() {
     return mBouncyTension;
   }
 
-  public double getBouncyFriction() {
+  double getBouncyFriction() {
     return mBouncyFriction;
   }
 
-  private double normalize(double value, double startValue, double endValue) {
+  double normalize(double value, double startValue, double endValue) {
     return (value - startValue) / (endValue - startValue);
   }
 
-  private double project_normal(double n, double start, double end) {
+  double project_normal(double n, double start, double end) {
     return start + (n * (end - start));
   }
 
-  private double linear_interpolation(double t, double start, double end) {
-    return t * end + (1.f - t) * start;
+  double linear_interpolation(double t, double start, double end) {
+    return t * end + (1.0 - t) * start;
   }
 
-  private double quadratic_out_interpolation(double t, double start, double end) {
+  double quadratic_out_interpolation(double t, double start, double end) {
     return linear_interpolation(2*t - t*t, start, end);
   }
 
-  private double b3_friction1(double x) {
-    return (0.0007 * Math.pow(x, 3)) - (0.031 * Math.pow(x, 2)) + 0.64 * x + 1.28;
+  double b3_friction1(double x) {
+    return (0.0007 * pow(x, 3)) - (0.031 * pow(x, 2)) + 0.64 * x + 1.28;
   }
 
-  private double b3_friction2(double x) {
-    return (0.000044 * Math.pow(x, 3)) - (0.006 * Math.pow(x, 2)) + 0.36 * x + 2.;
+  double b3_friction2(double x) {
+    return (0.000044 * pow(x, 3)) - (0.006 * pow(x, 2)) + 0.36 * x + 2.0;
   }
 
-  private double b3_friction3(double x) {
-    return (0.00000045 * Math.pow(x, 3)) - (0.000332 * Math.pow(x, 2)) + 0.1078 * x + 5.84;
+  double b3_friction3(double x) {
+    return (0.00000045 * pow(x, 3)) - (0.000332 * pow(x, 2)) + 0.1078 * x + 5.84;
   }
 
-  private double b3_nobounce(double tension) {
+  double b3_nobounce(double tension) {
     double friction = 0;
     if (tension <= 18) {
       friction = b3_friction1(tension);

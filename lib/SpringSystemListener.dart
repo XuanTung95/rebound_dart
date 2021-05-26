@@ -8,13 +8,15 @@
  *
  */
 
-package com.facebook.rebound;
+// package com.facebook.rebound;\
+
+import 'package:rebound_dart/BaseSpringSystem.dart';
 
 /**
  * SpringSystemListener provides an interface for listening to events before and after each Physics
  * solving loop the BaseSpringSystem runs.
  */
-public interface SpringSystemListener {
+abstract class SpringSystemListener {
 
   /**
    * Runs before each pass through the physics integration loop providing an opportunity to do any

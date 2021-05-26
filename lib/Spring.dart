@@ -8,58 +8,63 @@
  *
  */
 
-package com.facebook.rebound;
+//package com.facebook.rebound;
 
-import java.util.concurrent.CopyOnWriteArraySet;
+//import java.util.concurrent.CopyOnWriteArraySet;
+
+import 'dart:core';
+
+import 'package:rebound_dart/BaseSpringSystem.dart';
+import 'package:rebound_dart/SpringConfig.dart';
+import 'dart:math';
+
+import 'package:rebound_dart/SpringListener.dart';
 
 /**
  * Classical spring implementing Hooke's law with configurable friction and tension.
  */
-public class Spring {
+class Spring {
 
   // unique incrementer id for springs
-  private static int ID = 0;
+  static int ID = 0;
 
   // maximum amount of time to simulate per physics iteration in seconds (4 frames at 60 FPS)
-  private static final double MAX_DELTA_TIME_SEC = 0.064;
+  static final double MAX_DELTA_TIME_SEC = 0.064;
   // fixed timestep to use in the physics solver in seconds
-  private static final double SOLVER_TIMESTEP_SEC = 0.001;
-  private SpringConfig mSpringConfig;
-  private boolean mOvershootClampingEnabled;
+  static final double SOLVER_TIMESTEP_SEC = 0.001;
+  late SpringConfig mSpringConfig;
+  bool mOvershootClampingEnabled = false;
 
   // storage for the current and prior physics state while integration is occurring
-  private static class PhysicsState {
-    double position;
-    double velocity;
-  }
 
   // unique id for the spring in the system
-  private final String mId;
+  late final String mId;
   // all physics simulation objects are final and reused in each processing pass
-  private final PhysicsState mCurrentState = new PhysicsState();
-  private final PhysicsState mPreviousState = new PhysicsState();
-  private final PhysicsState mTempState = new PhysicsState();
-  private double mStartValue;
-  private double mEndValue;
-  private boolean mWasAtRest = true;
+  final PhysicsState mCurrentState = new PhysicsState();
+  final PhysicsState mPreviousState = new PhysicsState();
+  final PhysicsState mTempState = new PhysicsState();
+  double mStartValue = 0;
+  double mEndValue = 0;
+  bool mWasAtRest = true;
   // thresholds for determining when the spring is at rest
-  private double mRestSpeedThreshold = 0.005;
-  private double mDisplacementFromRestThreshold = 0.005;
-  private double mTimeAccumulator = 0;
-  private final CopyOnWriteArraySet<SpringListener> mListeners =
-    new CopyOnWriteArraySet<SpringListener>();
+  double mRestSpeedThreshold = 0.005;
+  double mDisplacementFromRestThreshold = 0.005;
+  double mTimeAccumulator = 0;
+  /*final CopyOnWriteArraySet<SpringListener> mListeners =
+    new CopyOnWriteArraySet<SpringListener>();*/
+  final Set<SpringListener> mListeners = Set();
 
-  private final BaseSpringSystem mSpringSystem;
+  late final BaseSpringSystem mSpringSystem;
 
   /**
    * create a new spring
    */
   Spring(BaseSpringSystem springSystem) {
-    if (springSystem == null) {
-      throw new IllegalArgumentException("Spring cannot be created outside of a BaseSpringSystem");
-    }
+    /*if (springSystem == null) {
+      throw new Exception("Spring cannot be created outside of a BaseSpringSystem");
+    }*/
     mSpringSystem = springSystem;
-    mId = "spring:" + ID++;
+    mId = "spring:${ID++}";
     setSpringConfig(SpringConfig.defaultConfig);
   }
 
@@ -68,7 +73,7 @@ public class Spring {
    * iterated anymore and will clear its set of listeners. Do not use the Spring after calling this,
    * doing so may just cause an exception to be thrown.
    */
-  public void destroy() {
+  void destroy() {
     mListeners.clear();
     mSpringSystem.deregisterSpring(this);
   }
@@ -77,7 +82,7 @@ public class Spring {
    * get the unique id for this spring
    * @return the unique id
    */
-  public String getId() {
+  String getId() {
     return mId;
   }
 
@@ -86,10 +91,10 @@ public class Spring {
    * @param springConfig config class for the spring
    * @return this Spring instance for chaining
    */
-  public Spring setSpringConfig(SpringConfig springConfig) {
-    if (springConfig == null) {
-      throw new IllegalArgumentException("springConfig is required");
-    }
+  Spring setSpringConfig(SpringConfig springConfig) {
+    /*if (springConfig == null) {
+      throw new Exception("springConfig is required");
+    }*/
     mSpringConfig = springConfig;
     return this;
   }
@@ -98,7 +103,7 @@ public class Spring {
    * retrieve the spring config for this spring
    * @return the SpringConfig applied to this spring
    */
-  public SpringConfig getSpringConfig() {
+  SpringConfig getSpringConfig() {
     return mSpringConfig;
   }
 
@@ -110,8 +115,8 @@ public class Spring {
    * @param currentValue the new start and current value for the spring
    * @return the spring for chaining
    */
-  public Spring setCurrentValue(double currentValue) {
-    return setCurrentValue(currentValue, true);
+  Spring setCurrentValue(double currentValue) {
+    return this.setCurrentValueInternal(currentValue, true);
   }
 
   /**
@@ -125,15 +130,15 @@ public class Spring {
    *                  see {@link com.facebook.rebound.Spring#setAtRest()}
    * @return the spring for chaining
    */
-  public Spring setCurrentValue(double currentValue, boolean setAtRest) {
+  Spring setCurrentValueInternal(double currentValue, bool setAtRest) {
     mStartValue = currentValue;
     mCurrentState.position = currentValue;
     mSpringSystem.activateSpring(this.getId());
-    for (SpringListener listener : mListeners) {
+    for (SpringListener listener in mListeners) {
       listener.onSpringUpdate(this);
     }
     if (setAtRest) {
-      setAtRest();
+      this.setAtRest();
     }
     return this;
   }
@@ -142,7 +147,7 @@ public class Spring {
    * Get the displacement value from the last time setCurrentValue was called.
    * @return displacement value
    */
-  public double getStartValue() {
+  double getStartValue() {
     return mStartValue;
   }
 
@@ -150,7 +155,7 @@ public class Spring {
    * Get the current
    * @return current value
    */
-  public double getCurrentValue() {
+  double getCurrentValue() {
     return mCurrentState.position;
   }
 
@@ -158,7 +163,7 @@ public class Spring {
    * get the displacement of the springs current value from its rest value.
    * @return the distance displaced by
    */
-  public double getCurrentDisplacementDistance() {
+  double getCurrentDisplacementDistance() {
     return getDisplacementDistanceForState(mCurrentState);
   }
 
@@ -167,8 +172,8 @@ public class Spring {
    * @param state the state to measure from
    * @return the distance displaced by
    */
-  private double getDisplacementDistanceForState(PhysicsState state) {
-    return Math.abs(mEndValue - state.position);
+  double getDisplacementDistanceForState(PhysicsState state) {
+    return (mEndValue - state.position).abs();
   }
 
   /**
@@ -176,14 +181,14 @@ public class Spring {
    * @param endValue the endValue for the spring
    * @return the spring for chaining
    */
-  public Spring setEndValue(double endValue) {
+  Spring setEndValue(double endValue) {
     if (mEndValue == endValue && isAtRest()) {
       return this;
     }
     mStartValue = getCurrentValue();
     mEndValue = endValue;
     mSpringSystem.activateSpring(this.getId());
-    for (SpringListener listener : mListeners) {
+    for (SpringListener listener in mListeners) {
       listener.onSpringEndStateChange(this);
     }
     return this;
@@ -193,7 +198,7 @@ public class Spring {
    * get the rest value used for determining the displacement of the spring
    * @return the rest value for the spring
    */
-  public double getEndValue() {
+  double getEndValue() {
     return mEndValue;
   }
 
@@ -202,7 +207,7 @@ public class Spring {
    * @param velocity velocity value
    * @return the spring for chaining
    */
-  public Spring setVelocity(double velocity) {
+  Spring setVelocity(double velocity) {
     if (velocity == mCurrentState.velocity) {
       return this;
     }
@@ -215,7 +220,7 @@ public class Spring {
    * get the velocity of the spring
    * @return the current velocity
    */
-  public double getVelocity() {
+  double getVelocity() {
     return mCurrentState.velocity;
   }
 
@@ -224,7 +229,7 @@ public class Spring {
    * @param restSpeedThreshold speed pixels per second
    * @return the spring for chaining
    */
-  public Spring setRestSpeedThreshold(double restSpeedThreshold) {
+  Spring setRestSpeedThreshold(double restSpeedThreshold) {
     mRestSpeedThreshold = restSpeedThreshold;
     return this;
   }
@@ -233,7 +238,7 @@ public class Spring {
    * Returns the speed at which the spring should be considered at rest in pixels per second
    * @return speed in pixels per second
    */
-  public double getRestSpeedThreshold() {
+  double getRestSpeedThreshold() {
     return mRestSpeedThreshold;
   }
 
@@ -242,7 +247,7 @@ public class Spring {
    * @param displacementFromRestThreshold displacement to consider resting below
    * @return the spring for chaining
    */
-  public Spring setRestDisplacementThreshold(double displacementFromRestThreshold) {
+  Spring setRestDisplacementThreshold(double displacementFromRestThreshold) {
     mDisplacementFromRestThreshold = displacementFromRestThreshold;
     return this;
   }
@@ -251,7 +256,7 @@ public class Spring {
    * get the threshold of displacement from rest below which the spring should be considered at rest
    * @return displacement to consider resting below
    */
-  public double getRestDisplacementThreshold() {
+  double getRestDisplacementThreshold() {
     return mDisplacementFromRestThreshold;
   }
 
@@ -260,7 +265,7 @@ public class Spring {
    * @param overshootClampingEnabled whether or not to enable overshoot clamping
    * @return the spring for chaining
    */
-  public Spring setOvershootClampingEnabled(boolean overshootClampingEnabled) {
+  Spring setOvershootClampingEnabled(bool overshootClampingEnabled) {
     mOvershootClampingEnabled = overshootClampingEnabled;
     return this;
   }
@@ -269,7 +274,7 @@ public class Spring {
    * Check if overshoot clamping is enabled.
    * @return is overshoot clamping enabled
    */
-  public boolean isOvershootClampingEnabled() {
+  bool isOvershootClampingEnabled() {
     return mOvershootClampingEnabled;
   }
 
@@ -277,7 +282,7 @@ public class Spring {
    * Check if the spring is overshooting beyond its target.
    * @return true if the spring is overshooting its target
    */
-  public boolean isOvershooting() {
+  bool isOvershooting() {
     return mSpringConfig.tension > 0 &&
            ((mStartValue < mEndValue && getCurrentValue() > mEndValue) ||
            (mStartValue > mEndValue && getCurrentValue() < mEndValue));
@@ -292,7 +297,7 @@ public class Spring {
    */
   void advance(double realDeltaTime) {
 
-    boolean isAtRest = isAtRest();
+    bool isAtRest = this.isAtRest();
 
     if (isAtRest && mWasAtRest) {
       /* begin debug
@@ -393,7 +398,7 @@ public class Spring {
     // End the spring immediately if it is overshooting and overshoot clamping is enabled.
     // Also make sure that if the spring was considered within a resting threshold that it's now
     // snapped to its end value.
-    if (isAtRest() || (mOvershootClampingEnabled && isOvershooting())) {
+    if (this.isAtRest() || (mOvershootClampingEnabled && isOvershooting())) {
       // Don't call setCurrentValue because that forces a call to onSpringUpdate
       if (tension > 0) {
         mStartValue = mEndValue;
@@ -422,17 +427,17 @@ public class Spring {
 
     // NB: do these checks outside the loop so all listeners are properly notified of the state
     //     transition
-    boolean notifyActivate = false;
+    bool notifyActivate = false;
     if (mWasAtRest) {
       mWasAtRest = false;
       notifyActivate = true;
     }
-    boolean notifyAtRest = false;
+    bool notifyAtRest = false;
     if (isAtRest) {
       mWasAtRest = true;
       notifyAtRest = true;
     }
-    for (SpringListener listener : mListeners) {
+    for (SpringListener listener in mListeners) {
       // starting to move
       if (notifyActivate) {
         listener.onSpringActivate(this);
@@ -453,7 +458,7 @@ public class Spring {
    * currently at rest and it was at rest in the previous advance, the system can skip this spring
    * @return should the system process this spring
    */
-  public boolean systemShouldAdvance() {
+  bool systemShouldAdvance() {
     return !isAtRest() || !wasAtRest();
   }
 
@@ -462,7 +467,7 @@ public class Spring {
    * callbacks are fired as the spring comes to a rest.
    * @return true if the spring was at rest in the prior iteration
    */
-  public boolean wasAtRest() {
+  bool wasAtRest() {
     return mWasAtRest;
   }
 
@@ -470,8 +475,8 @@ public class Spring {
    * check if the current state is at rest
    * @return is the spring at rest
    */
-  public boolean isAtRest() {
-    return Math.abs(mCurrentState.velocity) <= mRestSpeedThreshold &&
+  bool isAtRest() {
+    return (mCurrentState.velocity).abs() <= mRestSpeedThreshold &&
         (getDisplacementDistanceForState(mCurrentState) <= mDisplacementFromRestThreshold ||
          mSpringConfig.tension == 0);
   }
@@ -481,7 +486,7 @@ public class Spring {
    * velocity to 0.
    * @return this object
    */
-  public Spring setAtRest() {
+  Spring setAtRest() {
     mEndValue = mCurrentState.position;
     mTempState.position = mCurrentState.position;
     mCurrentState.velocity = 0;
@@ -493,7 +498,7 @@ public class Spring {
    * timestep remaining after processing the rendering delta time in timestep sized chunks.
    * @param alpha from 0 to 1, where 0 is the previous state, 1 is the current state
    */
-  private void interpolate(double alpha) {
+  void interpolate(double alpha) {
     mCurrentState.position = mCurrentState.position * alpha + mPreviousState.position *(1-alpha);
     mCurrentState.velocity = mCurrentState.velocity * alpha + mPreviousState.velocity *(1-alpha);
   }
@@ -505,10 +510,10 @@ public class Spring {
    * @param newListener to add
    * @return the spring for chaining
    */
-  public Spring addListener(SpringListener newListener) {
-    if (newListener == null) {
-      throw new IllegalArgumentException("newListener is required");
-    }
+  Spring addListener(SpringListener newListener) {
+    /*if (newListener == null) {
+      throw new Exception("newListener is required");
+    }*/
     mListeners.add(newListener);
     return this;
   }
@@ -518,10 +523,10 @@ public class Spring {
    * @param listenerToRemove to remove
    * @return the spring for chaining
    */
-  public Spring removeListener(SpringListener listenerToRemove) {
-    if (listenerToRemove == null) {
-      throw new IllegalArgumentException("listenerToRemove is required");
-    }
+  Spring removeListener(SpringListener listenerToRemove) {
+    /*if (listenerToRemove == null) {
+      throw new Exception("listenerToRemove is required");
+    }*/
     mListeners.remove(listenerToRemove);
     return this;
   }
@@ -530,7 +535,7 @@ public class Spring {
    * remove all of the listeners
    * @return the spring for chaining
    */
-  public Spring removeAllListeners() {
+  Spring removeAllListeners() {
     mListeners.clear();
     return this;
   }
@@ -542,9 +547,13 @@ public class Spring {
    * @return Whether the displacement value from the spring is within the bounds of the compare
    * value, accounting for threshold
    */
-  public boolean currentValueIsApproximately(double value) {
-    return Math.abs(getCurrentValue() - value) <= getRestDisplacementThreshold();
+  bool currentValueIsApproximately(double value) {
+    return (getCurrentValue() - value).abs() <= getRestDisplacementThreshold();
   }
 
 }
 
+class PhysicsState {
+  double position = 0;
+  double velocity = 0;
+}

@@ -8,9 +8,10 @@
  *
  */
 
-package com.facebook.rebound;
+// package com.facebook.rebound;
+import 'dart:math';
 
-public class SpringUtil {
+class SpringUtil {
 
   /**
    * Map a value within a given range to another range.
@@ -21,7 +22,7 @@ public class SpringUtil {
    * @param toHigh the high end of the range to map to
    * @return the mapped value
    */
-  public static double mapValueFromRangeToRange(
+  static double mapValueFromRangeToRange(
       double value,
       double fromLow,
       double fromHigh,
@@ -40,8 +41,8 @@ public class SpringUtil {
    * @param high the high end of the range
    * @return the clamped value
    */
-  public static double clamp(double value, double low, double high) {
-    return Math.min(Math.max(value, low), high);
+  static double clamp(double value, double low, double high) {
+    return min(max(value, low), high);
   }
 }
 

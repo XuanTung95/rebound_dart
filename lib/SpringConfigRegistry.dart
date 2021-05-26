@@ -8,30 +8,33 @@
  *
  */
 
-package com.facebook.rebound;
+//package com.facebook.rebound;
 
-import java.util.Collections;
+/*import java.util.Collections;
 import java.util.HashMap;
-import java.util.Map;
+import java.util.Map;*/
+
+import 'dart:core';
+
+import 'package:rebound_dart/SpringConfig.dart';
 
 /**
  * class for maintaining a registry of all spring configs
  */
-public class SpringConfigRegistry {
+class SpringConfigRegistry {
 
-  private static final SpringConfigRegistry INSTANCE = new SpringConfigRegistry(true);
+  static final SpringConfigRegistry INSTANCE = new SpringConfigRegistry(true);
 
-  public static SpringConfigRegistry getInstance() {
+  static SpringConfigRegistry getInstance() {
     return INSTANCE;
   }
 
-  private final Map<SpringConfig, String> mSpringConfigMap;
+  final Map<SpringConfig, String> mSpringConfigMap;
 
   /**
    * constructor for the SpringConfigRegistry
    */
-  SpringConfigRegistry(boolean includeDefaultEntry) {
-    mSpringConfigMap = new HashMap<SpringConfig, String>();
+  SpringConfigRegistry(bool includeDefaultEntry) : mSpringConfigMap = new Map<SpringConfig, String>() {
     if (includeDefaultEntry) {
       addSpringConfig(SpringConfig.defaultConfig, "default config");
     }
@@ -45,17 +48,17 @@ public class SpringConfigRegistry {
    * @return true if the SpringConfig was added, false if a config with that name is already
    *    present.
    */
-  public boolean addSpringConfig(SpringConfig springConfig, String configName) {
-    if (springConfig == null) {
-      throw new IllegalArgumentException("springConfig is required");
+  bool addSpringConfig(SpringConfig springConfig, String configName) {
+    /*if (springConfig == null) {
+      throw new Exception("springConfig is required");
     }
     if (configName == null) {
-      throw new IllegalArgumentException("configName is required");
-    }
+      throw new Exception("configName is required");
+    }*/
     if (mSpringConfigMap.containsKey(springConfig)) {
       return false;
     }
-    mSpringConfigMap.put(springConfig, configName);
+    mSpringConfigMap[springConfig] = configName;
     return true;
   }
 
@@ -64,10 +67,10 @@ public class SpringConfigRegistry {
    * @param springConfig the of the SpringConfig to remove
    * @return true if the SpringConfig was removed, false if it was not present.
    */
-  public boolean removeSpringConfig(SpringConfig springConfig) {
-    if (springConfig == null) {
-      throw new IllegalArgumentException("springConfig is required");
-    }
+  bool removeSpringConfig(SpringConfig springConfig) {
+    /*if (springConfig == null) {
+      throw new Exception("springConfig is required");
+    }*/
     return mSpringConfigMap.remove(springConfig) != null;
   }
 
@@ -75,14 +78,15 @@ public class SpringConfigRegistry {
    * retrieve all SpringConfig in the registry
    * @return a list of all SpringConfig
    */
-  public Map<SpringConfig, String> getAllSpringConfig() {
-    return Collections.unmodifiableMap(mSpringConfigMap);
+  Map<SpringConfig, String> getAllSpringConfig() {
+    // return Collections.unmodifiableMap(mSpringConfigMap);
+    return mSpringConfigMap;
   }
 
   /**
    * clear all SpringConfig in the registry
    */
-  public void removeAllSpringConfig() {
+  void removeAllSpringConfig() {
     mSpringConfigMap.clear();
   }
 }
