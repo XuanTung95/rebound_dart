@@ -14,7 +14,7 @@ class AnimationSpringLooper extends SpringLooper {
   AnimationSpringLooper(TickerProvider vsync) {
     controller = AnimationController(vsync: vsync, duration: Duration(seconds: 1));
     controller.addListener(() {
-      print("controller Callback");
+      // print("controller Callback");
       if (!mStarted || mSpringSystem == null) {
         return;
       }
