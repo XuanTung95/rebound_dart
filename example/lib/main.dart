@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:rebound_dart/SimpleSpringListener.dart';
-import 'package:rebound_dart/Spring.dart';
-import 'package:rebound_dart/SpringConfig.dart';
-import 'package:rebound_dart/SpringSystem.dart';
+import 'package:rebound_dart/rebound_dart.dart';
 import 'dart:math';
 
 void main() {
@@ -68,6 +65,12 @@ class _MyHomePageState extends State<MyHomePage>
         });
       },
     ));
+  }
+
+  @override
+  void dispose() {
+    springSystem.dispose();
+    super.dispose();
   }
 
   @override
@@ -153,7 +156,7 @@ class _MyHomePageState extends State<MyHomePage>
 
 class SpringConfigs {
   static SpringConfig NOT_DRAGGING =
-      SpringConfig.fromOrigamiTensionAndFriction(40.0, 5.5); // (60.0, 7.5)
+      SpringConfig.fromOrigamiTensionAndFriction(40.0, 4.5); // (60.0, 7.5)
   static SpringConfig CAPTURING =
       SpringConfig.fromBouncinessAndSpeed(8.0, 40.0);
   static SpringConfig CLOSE_SCALE =
