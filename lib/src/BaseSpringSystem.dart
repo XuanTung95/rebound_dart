@@ -119,16 +119,23 @@ class BaseSpringSystem {
    * @param deltaTime delta since last update in millis
    */
   void advance(double deltaTime) {
-    List toRemove = [];
-    for (Spring spring in mActiveSprings) {
+    /*
+    for (Spring spring : mActiveSprings) {
       // advance time in seconds
       if (spring.systemShouldAdvance()) {
         spring.advance(deltaTime / 1000.0);
       } else {
-        toRemove.add(spring);
+        mActiveSprings.remove(spring);
       }
     }
-    if (toRemove.isNotEmpty) mActiveSprings.removeAll(toRemove);
+    */
+    mActiveSprings.removeWhere((spring) => !spring.systemShouldAdvance());
+    if (mActiveSprings.isNotEmpty) {
+      List<Spring> toAdvance = List.from(mActiveSprings);
+      toAdvance.forEach((spring) {
+        spring.advance(deltaTime / 1000.0);
+      });
+    }
   }
 
   /**

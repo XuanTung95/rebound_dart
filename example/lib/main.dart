@@ -29,8 +29,19 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage>
-    with SingleTickerProviderStateMixin {
+class SpringChainData {
+  Widget child = SizedBox();
+  double x = 100.0;
+  double y = 100.0;
+  double initialX = 0.0;
+  double initialY = 0.0;
+  double initialTouchX = 0.0;
+  double initialTouchY = 0.0;
+  double scaleX = 1;
+  double scaleY = 1;
+}
+
+class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   late SpringSystem springSystem;
   late Spring springX;
   late Spring springY;
@@ -43,6 +54,11 @@ class _MyHomePageState extends State<MyHomePage>
   double scaleX = 1;
   double scaleY = 1;
   double HEAD_SIZE = 60;
+
+  // Demo SpringChain
+  late SpringChain springChainX;
+  late SpringChain springChainY;
+  List<SpringChainData> chainData = [];
 
   void initState() {
     super.initState();
@@ -65,11 +81,103 @@ class _MyHomePageState extends State<MyHomePage>
         });
       },
     ));
+    // demo Spring chain
+    springChainX = SpringChain.create(this);
+    springChainY = SpringChain.create(this);
+    int maxItem = 5;
+    for(int i=maxItem; i>=0; i--) {
+      Widget child = FloatingActionButton(
+        onPressed: null,
+        backgroundColor: Colors.amber[900],
+        child: Icon(
+          Icons.wifi_tethering,
+        ),
+      );
+      SpringChainData newData = SpringChainData();
+      chainData.add(newData);
+      springChainX.addSpring(SimpleSpringListener(
+        updateCallback: (spring) {
+          newData.x = spring.getCurrentValue();
+          setState(() {});
+        }
+      ));
+      springChainY.addSpring(SimpleSpringListener(
+        updateCallback: (spring) {
+          newData.y = spring.getCurrentValue();
+          setState(() {});
+        }
+      ));
+      if (i==0) {
+        child = GestureDetector(
+          onPanStart: (details) {},
+          onPanDown: (details) {
+            newData.initialX = newData.x;
+            newData.initialY = newData.y;
+            newData.initialTouchX = details.globalPosition.dx;
+            newData.initialTouchY = details.globalPosition.dy;
+            newData.scaleX = 0.9;
+            newData.scaleY = 0.9;
+          },
+          onPanEnd: (details) {
+            var size = MediaQuery.of(context).size;
+            var endX = newData.x;
+            var endY = newData.y;
+            var vx = details.velocity.pixelsPerSecond.dx;
+            var vy = details.velocity.pixelsPerSecond.dy;
+            if (vx == 0 && vy == 0) {
+              endX = newData.x;
+              endY = newData.y;
+            } else if (vx == 0) {
+              endX = newData.x;
+              endY = (vy > 0) ? size.height - HEAD_SIZE : 0;
+            } else if (vy == 0) {
+              endY = newData.y;
+              endX = (vx > 0) ? size.width - HEAD_SIZE : 0;
+            } else {
+              double tx =
+              (((vx > 0) ? (size.width - HEAD_SIZE - newData.x) : newData.x) / vx)
+                  .abs();
+              double ty =
+              (((vy > 0) ? (size.height - HEAD_SIZE - newData.y) : newData.y) / vy)
+                  .abs();
+              if (tx > ty) {
+                endY = ((vy > 0) ? (size.height - HEAD_SIZE) : 0);
+                endX = newData.x + vx * ty;
+              } else if (ty > tx) {
+                endX = (vx > 0) ? (size.width - HEAD_SIZE) : 0;
+                endY = newData.y + vy * tx;
+              } else {
+                endX = (vx > 0) ? (size.width - HEAD_SIZE) : 0;
+                endY = ((vy > 0) ? (size.height - HEAD_SIZE) : 0);
+              }
+            }
+            springChainX.getControlSpring().setEndValue(endX);
+            springChainY.getControlSpring().setEndValue(endY);
+            newData.scaleX = 1;
+            newData.scaleY = 1;
+          },
+          onPanUpdate: (details) {
+            setState(() {
+              springChainX.getControlSpring().setCurrentValue(
+                  newData.initialX + details.globalPosition.dx - newData.initialTouchX);
+              springChainY.getControlSpring().setCurrentValue(
+                  newData.initialY + details.globalPosition.dy - newData.initialTouchY);
+            });
+          },
+          child: child,
+        );
+        springChainX.setControlSpringIndex(maxItem);
+        springChainY.setControlSpringIndex(maxItem);
+      }
+      newData.child = child;
+    }
   }
 
   @override
   void dispose() {
     springSystem.dispose();
+    springChainX.dispose();
+    springChainY.dispose();
     super.dispose();
   }
 
@@ -148,9 +256,24 @@ class _MyHomePageState extends State<MyHomePage>
                   ),
                 ),
               )),
+          if (chainData.isNotEmpty) ...buildChain(),
         ],
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
+  }
+
+  List<Widget> buildChain() {
+    List<Widget> ret = [];
+    chainData.forEach((data) {
+      ret.add(Positioned(
+          left: data.x,
+          top: data.y,
+          child: SizedBox(
+              width: data.scaleY * HEAD_SIZE,
+              height: data.scaleY * HEAD_SIZE,
+              child: data.child)));
+    });
+    return ret;
   }
 }
 
