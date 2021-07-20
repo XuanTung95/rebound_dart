@@ -22,22 +22,22 @@ class SimpleSpringListener implements SpringListener {
   SimpleSpringListener({this.updateCallback, this.atRestCallback, this.activateCallback, this.endStateChangeCallback});
 
 
-  // @Override
+  @override
   void onSpringUpdate(Spring spring) {
     updateCallback?.call(spring);
   }
 
-  //@Override
+  @override
   void onSpringAtRest(Spring spring) {
     atRestCallback?.call(spring);
   }
 
-  //@Override
+  @override
   void onSpringActivate(Spring spring) {
     activateCallback?.call(spring);
   }
 
-  //@Override
+  @override
   void onSpringEndStateChange(Spring spring) {
     endStateChangeCallback?.call(spring);
   }

@@ -23,18 +23,18 @@ import 'package:rebound_dart/src/SpringConfig.dart';
  */
 class SpringConfigRegistry {
 
-  static final SpringConfigRegistry INSTANCE = new SpringConfigRegistry(true);
+  static final SpringConfigRegistry _INSTANCE = new SpringConfigRegistry(true);
 
   static SpringConfigRegistry getInstance() {
-    return INSTANCE;
+    return _INSTANCE;
   }
 
-  final Map<SpringConfig, String> mSpringConfigMap;
+  final Map<SpringConfig, String> _mSpringConfigMap;
 
   /**
    * constructor for the SpringConfigRegistry
    */
-  SpringConfigRegistry(bool includeDefaultEntry) : mSpringConfigMap = new Map<SpringConfig, String>() {
+  SpringConfigRegistry(bool includeDefaultEntry) : _mSpringConfigMap = new Map<SpringConfig, String>() {
     if (includeDefaultEntry) {
       addSpringConfig(SpringConfig.defaultConfig, "default config");
     }
@@ -49,16 +49,10 @@ class SpringConfigRegistry {
    *    present.
    */
   bool addSpringConfig(SpringConfig springConfig, String configName) {
-    /*if (springConfig == null) {
-      throw new Exception("springConfig is required");
-    }
-    if (configName == null) {
-      throw new Exception("configName is required");
-    }*/
-    if (mSpringConfigMap.containsKey(springConfig)) {
+    if (_mSpringConfigMap.containsKey(springConfig)) {
       return false;
     }
-    mSpringConfigMap[springConfig] = configName;
+    _mSpringConfigMap[springConfig] = configName;
     return true;
   }
 
@@ -68,10 +62,7 @@ class SpringConfigRegistry {
    * @return true if the SpringConfig was removed, false if it was not present.
    */
   bool removeSpringConfig(SpringConfig springConfig) {
-    /*if (springConfig == null) {
-      throw new Exception("springConfig is required");
-    }*/
-    return mSpringConfigMap.remove(springConfig) != null;
+    return _mSpringConfigMap.remove(springConfig) != null;
   }
 
   /**
@@ -80,14 +71,14 @@ class SpringConfigRegistry {
    */
   Map<SpringConfig, String> getAllSpringConfig() {
     // return Collections.unmodifiableMap(mSpringConfigMap);
-    return mSpringConfigMap;
+    return _mSpringConfigMap;
   }
 
   /**
    * clear all SpringConfig in the registry
    */
   void removeAllSpringConfig() {
-    mSpringConfigMap.clear();
+    _mSpringConfigMap.clear();
   }
 }
 

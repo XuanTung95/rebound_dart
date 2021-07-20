@@ -13,32 +13,31 @@ import 'package:rebound_dart/src/SpringLooper.dart';
 
 class SteppingLooper extends SpringLooper {
 
-  bool mStarted = false;
-  int mLastTime = 0;
+  bool _mStarted = false;
+  int _mLastTime = 0;
 
-  // @Override
+  @override
   void start() {
-    mStarted = true;
-    mLastTime = 0;
+    _mStarted = true;
+    _mLastTime = 0;
   }
 
   bool step(int interval) {
-    if (mSpringSystem == null || !mStarted) {
+    if (mSpringSystem == null || !_mStarted) {
       return false;
     }
-    int currentTime = mLastTime + interval;
+    int currentTime = _mLastTime + interval;
     mSpringSystem!.loop(currentTime.toDouble());
-    mLastTime = currentTime;
+    _mLastTime = currentTime;
     return mSpringSystem!.getIsIdle();
   }
 
-  // @Override
+  @override
   void stop() {
-    mStarted = false;
+    _mStarted = false;
   }
 
   void dispose(){
-
   }
 }
 

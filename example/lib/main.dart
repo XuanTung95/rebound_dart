@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:rebound_dart/rebound_dart.dart';
 import 'dart:math';
+import 'dart:ui';
 
 void main() {
   runApp(MyApp());
@@ -30,7 +31,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class SpringChainData {
-  Widget child = SizedBox();
+  late final Widget _child;
   double x = 100.0;
   double y = 100.0;
   double initialX = 0.0;
@@ -39,21 +40,82 @@ class SpringChainData {
   double initialTouchY = 0.0;
   double scaleX = 1;
   double scaleY = 1;
+  double HEAD_SIZE = 60;
+
+  void setChild(Widget child, {bool isControl = false}) {
+    if (isControl) {
+      _child = GestureDetector(
+        onPanStart: (details) {},
+        onPanDown: (details) {
+          initialX = x;
+          initialY = y;
+          initialTouchX = details.globalPosition.dx;
+          initialTouchY = details.globalPosition.dy;
+          scaleX = 1.1;
+          scaleY = 1.1;
+        },
+        onPanEnd: (details) {
+          var endX = x;
+          var endY = y;
+          var vx = details.velocity.pixelsPerSecond.dx;
+          var vy = details.velocity.pixelsPerSecond.dy;
+          if (vx == 0 && vy == 0) {
+            endX = x;
+            endY = y;
+          } else if (vx == 0) {
+            endX = x;
+            endY = (vy > 0) ? size.height - HEAD_SIZE : 0;
+          } else if (vy == 0) {
+            endY = y;
+            endX = (vx > 0) ? size.width - HEAD_SIZE : 0;
+          } else {
+            double tx =
+            (((vx > 0) ? (size.width - HEAD_SIZE - x) : x) / vx)
+                .abs();
+            double ty =
+            (((vy > 0) ? (size.height - HEAD_SIZE - y) : y) / vy)
+                .abs();
+            if (tx > ty) {
+              endY = ((vy > 0) ? (size.height - HEAD_SIZE) : 0);
+              endX = x + vx * ty;
+            } else if (ty > tx) {
+              endX = (vx > 0) ? (size.width - HEAD_SIZE) : 0;
+              endY = y + vy * tx;
+            } else {
+              endX = (vx > 0) ? (size.width - HEAD_SIZE) : 0;
+              endY = ((vy > 0) ? (size.height - HEAD_SIZE) : 0);
+            }
+          }
+          springX?.setEndValue(endX);
+          springY?.setEndValue(endY);
+          scaleX = 1;
+          scaleY = 1;
+        },
+        onPanUpdate: (details) {
+            springX?.setCurrentValue(
+                initialX + details.globalPosition.dx - initialTouchX);
+            springY?.setCurrentValue(
+                initialY + details.globalPosition.dy - initialTouchY);
+        },
+        child: child,
+      );
+    } else {
+      _child = child;
+    }
+  }
+
+  Widget get child => _child;
+
+  Size size = Size(300, 500);
+  Spring? springX;
+  Spring? springY;
 }
 
 class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   late SpringSystem springSystem;
   late Spring springX;
   late Spring springY;
-  double x = 0.0;
-  double y = 0.0;
-  double initialX = 0.0;
-  double initialY = 0.0;
-  double initialTouchX = 0.0;
-  double initialTouchY = 0.0;
-  double scaleX = 1;
-  double scaleY = 1;
-  double HEAD_SIZE = 60;
+  late SpringChainData springData;
 
   // Demo SpringChain
   late SpringChain springChainX;
@@ -62,6 +124,11 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
   void initState() {
     super.initState();
+    Size size = window.physicalSize / window.devicePixelRatio;
+    springData = SpringChainData()
+      ..x=30
+      ..y=30;
+    springData.size = size;
     springSystem = SpringSystem.create(this);
     springX = springSystem.createSpring();
     springY = springSystem.createSpring();
@@ -70,17 +137,31 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     springX.addListener(SimpleSpringListener(
       updateCallback: (spring) {
         setState(() {
-          x = spring.getCurrentValue();
+          springData.x = spring.getCurrentValue();
         });
       },
     ));
     springY.addListener(SimpleSpringListener(
       updateCallback: (spring) {
         setState(() {
-          y = spring.getCurrentValue();
+          springData.y = spring.getCurrentValue();
         });
       },
     ));
+    springData.springX = springX;
+    springData.springY = springY;
+    springData.setChild(SizedBox(
+      width: springData.scaleY * springData.HEAD_SIZE,
+      height: springData.scaleY * springData.HEAD_SIZE,
+      child: FloatingActionButton(
+        onPressed: null,
+        child: Icon(
+          Icons.home,
+        ),
+      ),
+    ), isControl: true);
+
+
     // demo Spring chain
     springChainX = SpringChain.create(this);
     springChainY = SpringChain.create(this);
@@ -94,6 +175,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         ),
       );
       SpringChainData newData = SpringChainData();
+      newData.size = size;
       chainData.add(newData);
       springChainX.addSpring(SimpleSpringListener(
         updateCallback: (spring) {
@@ -108,68 +190,14 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         }
       ));
       if (i==0) {
-        child = GestureDetector(
-          onPanStart: (details) {},
-          onPanDown: (details) {
-            newData.initialX = newData.x;
-            newData.initialY = newData.y;
-            newData.initialTouchX = details.globalPosition.dx;
-            newData.initialTouchY = details.globalPosition.dy;
-            newData.scaleX = 0.9;
-            newData.scaleY = 0.9;
-          },
-          onPanEnd: (details) {
-            var size = MediaQuery.of(context).size;
-            var endX = newData.x;
-            var endY = newData.y;
-            var vx = details.velocity.pixelsPerSecond.dx;
-            var vy = details.velocity.pixelsPerSecond.dy;
-            if (vx == 0 && vy == 0) {
-              endX = newData.x;
-              endY = newData.y;
-            } else if (vx == 0) {
-              endX = newData.x;
-              endY = (vy > 0) ? size.height - HEAD_SIZE : 0;
-            } else if (vy == 0) {
-              endY = newData.y;
-              endX = (vx > 0) ? size.width - HEAD_SIZE : 0;
-            } else {
-              double tx =
-              (((vx > 0) ? (size.width - HEAD_SIZE - newData.x) : newData.x) / vx)
-                  .abs();
-              double ty =
-              (((vy > 0) ? (size.height - HEAD_SIZE - newData.y) : newData.y) / vy)
-                  .abs();
-              if (tx > ty) {
-                endY = ((vy > 0) ? (size.height - HEAD_SIZE) : 0);
-                endX = newData.x + vx * ty;
-              } else if (ty > tx) {
-                endX = (vx > 0) ? (size.width - HEAD_SIZE) : 0;
-                endY = newData.y + vy * tx;
-              } else {
-                endX = (vx > 0) ? (size.width - HEAD_SIZE) : 0;
-                endY = ((vy > 0) ? (size.height - HEAD_SIZE) : 0);
-              }
-            }
-            springChainX.getControlSpring().setEndValue(endX);
-            springChainY.getControlSpring().setEndValue(endY);
-            newData.scaleX = 1;
-            newData.scaleY = 1;
-          },
-          onPanUpdate: (details) {
-            setState(() {
-              springChainX.getControlSpring().setCurrentValue(
-                  newData.initialX + details.globalPosition.dx - newData.initialTouchX);
-              springChainY.getControlSpring().setCurrentValue(
-                  newData.initialY + details.globalPosition.dy - newData.initialTouchY);
-            });
-          },
-          child: child,
-        );
         springChainX.setControlSpringIndex(maxItem);
         springChainY.setControlSpringIndex(maxItem);
+        newData.springX = springChainX.getControlSpring();
+        newData.springY = springChainY.getControlSpring();
+        newData.setChild(child, isControl: true);
+      } else {
+        newData.setChild(child, isControl: false);
       }
-      newData.child = child;
     }
   }
 
@@ -187,75 +215,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       body: Stack(
         children: [
           Positioned(
-              left: x,
-              top: y,
-              child: GestureDetector(
-                onPanStart: (details) {},
-                onPanDown: (details) {
-                  initialX = x;
-                  initialY = y;
-                  initialTouchX = details.globalPosition.dx;
-                  initialTouchY = details.globalPosition.dy;
-                  scaleX = 0.9;
-                  scaleY = 0.9;
-                },
-                onPanEnd: (details) {
-                  var size = MediaQuery.of(context).size;
-                  var endX = x;
-                  var endY = y;
-                  var vx = details.velocity.pixelsPerSecond.dx;
-                  var vy = details.velocity.pixelsPerSecond.dy;
-                  if (vx == 0 && vy == 0) {
-                    endX = x;
-                    endY = y;
-                  } else if (vx == 0) {
-                    endX = x;
-                    endY = (vy > 0) ? size.height - HEAD_SIZE : 0;
-                  } else if (vy == 0) {
-                    endY = y;
-                    endX = (vx > 0) ? size.width - HEAD_SIZE : 0;
-                  } else {
-                    double tx =
-                        (((vx > 0) ? (size.width - HEAD_SIZE - x) : x) / vx)
-                            .abs();
-                    double ty =
-                        (((vy > 0) ? (size.height - HEAD_SIZE - y) : y) / vy)
-                            .abs();
-                    if (tx > ty) {
-                      endY = ((vy > 0) ? (size.height - HEAD_SIZE) : 0);
-                      endX = x + vx * ty;
-                    } else if (ty > tx) {
-                      endX = (vx > 0) ? (size.width - HEAD_SIZE) : 0;
-                      endY = y + vy * tx;
-                    } else {
-                      endX = (vx > 0) ? (size.width - HEAD_SIZE) : 0;
-                      endY = ((vy > 0) ? (size.height - HEAD_SIZE) : 0);
-                    }
-                  }
-                  springX.setEndValue(endX);
-                  springY.setEndValue(endY);
-                  scaleX = 1;
-                  scaleY = 1;
-                },
-                onPanUpdate: (details) {
-                  setState(() {
-                    springX.setCurrentValue(
-                        initialX + details.globalPosition.dx - initialTouchX);
-                    springY.setCurrentValue(
-                        initialY + details.globalPosition.dy - initialTouchY);
-                  });
-                },
-                child: SizedBox(
-                  width: scaleY * HEAD_SIZE,
-                  height: scaleY * HEAD_SIZE,
-                  child: FloatingActionButton(
-                    onPressed: null,
-                    child: Icon(
-                      Icons.home,
-                    ),
-                  ),
-                ),
-              )),
+              left: springData.x,
+              top: springData.y,
+              child: springData.child),
           if (chainData.isNotEmpty) ...buildChain(),
         ],
       ), // This trailing comma makes auto-formatting nicer for build methods.
@@ -269,8 +231,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
           left: data.x,
           top: data.y,
           child: SizedBox(
-              width: data.scaleY * HEAD_SIZE,
-              height: data.scaleY * HEAD_SIZE,
+              width: data.scaleY * data.HEAD_SIZE,
+              height: data.scaleY * data.HEAD_SIZE,
               child: data.child)));
     });
     return ret;

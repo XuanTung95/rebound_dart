@@ -1,5 +1,5 @@
 name: rebound_dart
-description: Ported from <a href="https://github.com/facebookarchive/rebound">Rebound</a> to Dart. Rebound library models spring dynamics. Rebound spring models can be used to create animations that feel natural by introducing real world physics to your application.
+description: Ported from https://github.com/facebookarchive/rebound to Dart. Rebound library models spring dynamics. Rebound spring models can be used to create animations that feel natural by introducing real world physics to your application.
 
 # The following line prevents the package from being accidentally published to
 # pub.dev using `pub publish`. This is preferred for private packages.
@@ -15,7 +15,7 @@ description: Ported from <a href="https://github.com/facebookarchive/rebound">Re
 # In iOS, build-name is used as CFBundleShortVersionString while build-number used as CFBundleVersion.
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-version: 0.1.0+1
+version: 0.2.0
 # author: findyou795@gmail.com
 homepage: https://github.com/XuanTung95/rebound_dart.git
 

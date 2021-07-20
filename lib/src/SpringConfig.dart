@@ -26,8 +26,7 @@ class SpringConfig {
    * @param tension tension value for the SpringConfig
    * @param friction friction value for the SpringConfig
    */
-  SpringConfig(double tension, double friction): this.tension = tension, this.friction = friction {
-  }
+  SpringConfig(double tension, double friction): this.tension = tension, this.friction = friction;
 
   /**
    * A helper to make creating a SpringConfig easier with values mapping to the Origami values.

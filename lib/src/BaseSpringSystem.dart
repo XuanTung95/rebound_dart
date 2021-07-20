@@ -24,11 +24,11 @@ import 'package:rebound_dart/src/SpringSystemListener.dart';
  */
 class BaseSpringSystem {
 
-  final Map<String, Spring> mSpringRegistry = new Map<String, Spring>();
-  final Set<Spring> mActiveSprings = Set(); //new CopyOnWriteArraySet<Spring>();
+  final Map<String, Spring> _mSpringRegistry = new Map<String, Spring>();
+  final Set<Spring> _mActiveSprings = Set(); //new CopyOnWriteArraySet<Spring>();
   late final SpringLooper mSpringLooper;
-  final Set<SpringSystemListener> mListeners = Set(); //new CopyOnWriteArraySet<SpringSystemListener>();
-  bool mIdle = true;
+  final Set<SpringSystemListener> _mListeners = Set(); //new CopyOnWriteArraySet<SpringSystemListener>();
+  bool _mIdle = true;
 
   /**
    * create a new BaseSpringSystem
@@ -36,9 +36,6 @@ class BaseSpringSystem {
    *        physics loop
    */
   BaseSpringSystem(SpringLooper springLooper) {
-    /*if (springLooper == null) {
-      throw new Exception("springLooper is required");
-    }*/
     mSpringLooper = springLooper;
     mSpringLooper.setSpringSystem(this);
   }
@@ -48,7 +45,7 @@ class BaseSpringSystem {
    * @return is the system idle
    */
   bool getIsIdle() {
-    return mIdle;
+    return _mIdle;
   }
 
   /**
@@ -67,10 +64,7 @@ class BaseSpringSystem {
    * @return Spring with the specified key
    */
   Spring? getSpringById(String id) {
-    /*if (id == null) {
-      throw new Exception("id is required");
-    }*/
-    return mSpringRegistry[id];
+    return _mSpringRegistry[id];
   }
 
   /**
@@ -78,7 +72,7 @@ class BaseSpringSystem {
    * @return all the springs
    */
   List<Spring> getAllSprings() {
-    return mSpringRegistry.values.toList();
+    return _mSpringRegistry.values.toList();
     /*if (collection instanceof List) {
       list = (List<Spring>)collection;
     } else {
@@ -92,12 +86,9 @@ class BaseSpringSystem {
    * @param spring the Spring to register
    */
   void registerSpring(Spring spring) {
-    /*if (spring == null) {
-      throw new Exception("spring is required");
-    }*/
-    if (mSpringRegistry.containsKey(spring.getId())) {
+    if (_mSpringRegistry.containsKey(spring.getId())) {
       throw new Exception("spring is already registered"); }
-    mSpringRegistry[spring.getId()] = spring;
+    _mSpringRegistry[spring.getId()] = spring;
   }
 
   /**
@@ -107,11 +98,8 @@ class BaseSpringSystem {
    * @param spring the Spring to deregister
    */
   void deregisterSpring(Spring spring) {
-    /*if (spring == null) {
-      throw new Exception("spring is required");
-    }*/
-    mActiveSprings.remove(spring);
-    mSpringRegistry.remove(spring.getId());
+    _mActiveSprings.remove(spring);
+    _mSpringRegistry.remove(spring.getId());
   }
 
   /**
@@ -129,9 +117,9 @@ class BaseSpringSystem {
       }
     }
     */
-    mActiveSprings.removeWhere((spring) => !spring.systemShouldAdvance());
-    if (mActiveSprings.isNotEmpty) {
-      List<Spring> toAdvance = List.from(mActiveSprings);
+    _mActiveSprings.removeWhere((spring) => !spring.systemShouldAdvance());
+    if (_mActiveSprings.isNotEmpty) {
+      List<Spring> toAdvance = List.from(_mActiveSprings);
       toAdvance.forEach((spring) {
         spring.advance(deltaTime / 1000.0);
       });
@@ -143,17 +131,17 @@ class BaseSpringSystem {
    * @param elapsedMillis elapsed milliseconds
    */
   void loop(double elapsedMillis) {
-    for (SpringSystemListener listener in mListeners) {
+    for (SpringSystemListener listener in _mListeners) {
       listener.onBeforeIntegrate(this);
     }
     advance(elapsedMillis);
-    if (mActiveSprings.isEmpty) {
-      mIdle = true;
+    if (_mActiveSprings.isEmpty) {
+      _mIdle = true;
     }
-    for (SpringSystemListener listener in mListeners) {
+    for (SpringSystemListener listener in _mListeners) {
       listener.onAfterIntegrate(this);
     }
-    if (mIdle) {
+    if (_mIdle) {
       mSpringLooper.stop();
     }
   }
@@ -165,13 +153,13 @@ class BaseSpringSystem {
    * @param springId the id of the Spring to be activated
    */
   void activateSpring(String springId) {
-    Spring? spring = mSpringRegistry[springId];
+    Spring? spring = _mSpringRegistry[springId];
     if (spring == null) {
       throw new Exception("springId " + springId + " does not reference a registered spring");
     }
-    mActiveSprings.add(spring);
+    _mActiveSprings.add(spring);
     if (getIsIdle()) {
-      mIdle = false;
+      _mIdle = false;
       mSpringLooper.start();
     }
   }
@@ -183,10 +171,7 @@ class BaseSpringSystem {
    * @param newListener listener
    */
   void addListener(SpringSystemListener newListener) {
-    /*if (newListener == null) {
-      throw new Exception("newListener is required");
-    }*/
-    mListeners.add(newListener);
+    _mListeners.add(newListener);
   }
 
   /**
@@ -194,17 +179,14 @@ class BaseSpringSystem {
    * @param listenerToRemove listener
    */
   void removeListener(SpringSystemListener listenerToRemove) {
-    /*if (listenerToRemove == null) {
-      throw new Exception("listenerToRemove is required");
-    }*/
-    mListeners.remove(listenerToRemove);
+    _mListeners.remove(listenerToRemove);
   }
 
   /**
    * Remove all listeners.
    */
   void removeAllListeners() {
-    mListeners.clear();
+    _mListeners.clear();
   }
 }
 

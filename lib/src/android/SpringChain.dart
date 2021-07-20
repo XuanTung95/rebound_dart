@@ -34,12 +34,12 @@ class SpringChain implements SpringListener {
    * Add these spring configs to the registry to support live tuning through the
    * {@link com.facebook.rebound.ui.SpringConfiguratorView}
    */
-  // static final SpringConfigRegistry registry = SpringConfigRegistry.getInstance();
-  static const double DEFAULT_MAIN_TENSION = 40;
-  static const double DEFAULT_MAIN_FRICTION = 6;
-  static const double DEFAULT_ATTACHMENT_TENSION = 70;
-  static const double DEFAULT_ATTACHMENT_FRICTION = 10;
-  static int id = 0;
+  static final SpringConfigRegistry registry = SpringConfigRegistry.getInstance();
+  static const double _DEFAULT_MAIN_TENSION = 40;
+  static const double _DEFAULT_MAIN_FRICTION = 6;
+  static const double _DEFAULT_ATTACHMENT_TENSION = 70;
+  static const double _DEFAULT_ATTACHMENT_FRICTION = 10;
+  static int _id = 0;
 
 
   /**
@@ -59,26 +59,26 @@ class SpringChain implements SpringListener {
    * @return the newly created SpringChain
    */
   static SpringChain create(TickerProvider vsync,
-      {   double mainTension = DEFAULT_MAIN_TENSION,
-          double mainFriction = DEFAULT_MAIN_FRICTION,
-          double attachmentTension = DEFAULT_ATTACHMENT_TENSION,
-          double attachmentFriction = DEFAULT_ATTACHMENT_FRICTION}) {
+      {   double mainTension = _DEFAULT_MAIN_TENSION,
+          double mainFriction = _DEFAULT_MAIN_FRICTION,
+          double attachmentTension = _DEFAULT_ATTACHMENT_TENSION,
+          double attachmentFriction = _DEFAULT_ATTACHMENT_FRICTION}) {
     return new SpringChain(vsync, mainTension: mainTension, mainFriction: mainFriction, attachmentTension: attachmentTension, attachmentFriction: attachmentFriction);
   }
 
-  late final SpringSystem mSpringSystem;
-  final List<SpringListener> mListeners = []; // CopyOnWriteArrayList
-  final List<Spring> mSprings = []; // CopyOnWriteArrayList
-  int mControlSpringIndex = -1;
+  late final SpringSystem _mSpringSystem;
+  final List<SpringListener> _mListeners = []; // CopyOnWriteArrayList
+  final List<Spring> _mSprings = []; // CopyOnWriteArrayList
+  int _mControlSpringIndex = -1;
 
   // The main spring config defines the tension and friction for the control spring. Keeping these
   // values separate allows the behavior of the trailing springs to be different than that of the
   // control point.
-  late final SpringConfig mMainSpringConfig;
+  late final SpringConfig _mMainSpringConfig;
 
   // The attachment spring config defines the tension and friction for the rest of the springs in
   // the chain.
-  late final SpringConfig mAttachmentSpringConfig;
+  late final SpringConfig _mAttachmentSpringConfig;
 
   /*SpringChain() {
     this(
@@ -90,33 +90,33 @@ class SpringChain implements SpringListener {
 
   SpringChain(TickerProvider vsync,
   {
-      double mainTension = DEFAULT_MAIN_TENSION,
-      double mainFriction = DEFAULT_MAIN_FRICTION,
-      double attachmentTension = DEFAULT_ATTACHMENT_TENSION,
-      double attachmentFriction = DEFAULT_ATTACHMENT_FRICTION}) {
-    mSpringSystem = SpringSystem.create(vsync);
-    mMainSpringConfig = SpringConfig.fromOrigamiTensionAndFriction(mainTension, mainFriction);
-    mAttachmentSpringConfig =
+      double mainTension = _DEFAULT_MAIN_TENSION,
+      double mainFriction = _DEFAULT_MAIN_FRICTION,
+      double attachmentTension = _DEFAULT_ATTACHMENT_TENSION,
+      double attachmentFriction = _DEFAULT_ATTACHMENT_FRICTION}) {
+    _mSpringSystem = SpringSystem.create(vsync);
+    _mMainSpringConfig = SpringConfig.fromOrigamiTensionAndFriction(mainTension, mainFriction);
+    _mAttachmentSpringConfig =
         SpringConfig.fromOrigamiTensionAndFriction(attachmentTension, attachmentFriction);
-    // registry.addSpringConfig(mMainSpringConfig, "main spring ${id++}");
-    // registry.addSpringConfig(mAttachmentSpringConfig, "attachment spring ${id++}");
+    registry.addSpringConfig(_mMainSpringConfig, "main spring ${_id++}");
+    registry.addSpringConfig(_mAttachmentSpringConfig, "attachment spring ${_id++}");
   }
 
   void dispose() {
-    mSprings.forEach((spring) {
+    _mSprings.forEach((spring) {
       spring.destroy();
     });
-    mSprings.clear();
-    mListeners.clear();
-    mSpringSystem.dispose();
+    _mSprings.clear();
+    _mListeners.clear();
+    _mSpringSystem.dispose();
   }
 
   SpringConfig getMainSpringConfig() {
-    return mMainSpringConfig;
+    return _mMainSpringConfig;
   }
 
   SpringConfig getAttachmentSpringConfig() {
-    return mAttachmentSpringConfig;
+    return _mAttachmentSpringConfig;
   }
 
   /**
@@ -127,12 +127,12 @@ class SpringChain implements SpringListener {
   SpringChain addSpring(final SpringListener listener) {
     // We listen to each spring added to the SpringChain and dynamically chain the springs together
     // whenever the control spring state is modified.
-    Spring spring = mSpringSystem
+    Spring spring = _mSpringSystem
         .createSpring()
         .addListener(this)
-        .setSpringConfig(mAttachmentSpringConfig);
-    mSprings.add(spring);
-    mListeners.add(listener);
+        .setSpringConfig(_mAttachmentSpringConfig);
+    _mSprings.add(spring);
+    _mListeners.add(listener);
     return this;
   }
 
@@ -143,15 +143,18 @@ class SpringChain implements SpringListener {
    * @return this SpringChain
    */
   SpringChain setControlSpringIndex(int i) {
-    mControlSpringIndex = i;
+    if (i < 0 || i >= _mSprings.length) {
+      return this;
+    }
+    _mControlSpringIndex = i;
     /*Spring controlSpring = mSprings.get(mControlSpringIndex);
     if (controlSpring == null) {
       return null;
     }*/
-    for (Spring spring in mSpringSystem.getAllSprings()) {
-      spring.setSpringConfig(mAttachmentSpringConfig);
+    for (Spring spring in _mSpringSystem.getAllSprings()) {
+      spring.setSpringConfig(_mAttachmentSpringConfig);
     }
-    getControlSpring().setSpringConfig(mMainSpringConfig);
+    getControlSpring().setSpringConfig(_mMainSpringConfig);
     return this;
   }
 
@@ -161,7 +164,7 @@ class SpringChain implements SpringListener {
    * @return the control spring.
    */
   Spring getControlSpring() {
-    return mSprings[mControlSpringIndex];
+    return _mSprings[_mControlSpringIndex];
   }
 
   /**
@@ -169,50 +172,50 @@ class SpringChain implements SpringListener {
    * @return the list of springs
    */
   List<Spring> getAllSprings() {
-    return mSprings;
+    return _mSprings;
   }
 
   @override
   void onSpringUpdate(Spring spring) {
     // Get the control spring index and update the endValue of each spring above and below it in the
     // spring collection triggering a cascading effect.
-    int idx = mSprings.indexOf(spring);
+    int idx = _mSprings.indexOf(spring);
     if (idx < 0) return;
-    SpringListener listener = mListeners[idx];
+    SpringListener listener = _mListeners[idx];
     int above = -1;
     int below = -1;
-    if (idx == mControlSpringIndex) {
+    if (idx == _mControlSpringIndex) {
       below = idx - 1;
       above = idx + 1;
-    } else if (idx < mControlSpringIndex) {
+    } else if (idx < _mControlSpringIndex) {
       below = idx - 1;
-    } else if (idx > mControlSpringIndex) {
+    } else if (idx > _mControlSpringIndex) {
       above = idx + 1;
     }
-    if (above > -1 && above < mSprings.length) {
-      mSprings[above].setEndValue(spring.getCurrentValue());
+    if (above > -1 && above < _mSprings.length) {
+      _mSprings[above].setEndValue(spring.getCurrentValue());
     }
-    if (below > -1 && below < mSprings.length) {
-      mSprings[below].setEndValue(spring.getCurrentValue());
+    if (below > -1 && below < _mSprings.length) {
+      _mSprings[below].setEndValue(spring.getCurrentValue());
     }
     listener.onSpringUpdate(spring);
   }
 
   @override
   void onSpringAtRest(Spring spring) {
-    int idx = mSprings.indexOf(spring);
-    mListeners[idx].onSpringAtRest(spring);
+    int idx = _mSprings.indexOf(spring);
+    _mListeners[idx].onSpringAtRest(spring);
   }
 
   @override
   void onSpringActivate(Spring spring) {
-    int idx = mSprings.indexOf(spring);
-    mListeners[idx].onSpringActivate(spring);
+    int idx = _mSprings.indexOf(spring);
+    _mListeners[idx].onSpringActivate(spring);
   }
 
   @override
   void onSpringEndStateChange(Spring spring) {
-    int idx = mSprings.indexOf(spring);
-    mListeners[idx].onSpringEndStateChange(spring);
+    int idx = _mSprings.indexOf(spring);
+    _mListeners[idx].onSpringEndStateChange(spring);
   }
 }

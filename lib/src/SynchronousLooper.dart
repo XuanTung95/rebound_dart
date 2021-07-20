@@ -14,33 +14,33 @@ import 'package:rebound_dart/src/SpringLooper.dart';
 class SynchronousLooper extends SpringLooper {
 
   static final double SIXTY_FPS = 16.6667;
-  double mTimeStep = SIXTY_FPS;
-  bool mRunning = false;
+  double _mTimeStep = SIXTY_FPS;
+  bool _mRunning = false;
 
   SynchronousLooper();
 
   double getTimeStep() {
-    return mTimeStep;
+    return _mTimeStep;
   }
 
   void setTimeStep(double timeStep) {
-    mTimeStep = timeStep;
+    _mTimeStep = timeStep;
   }
 
-  //@Override
+  @override
   void start() {
-    mRunning = true;
+    _mRunning = true;
     while (!mSpringSystem!.getIsIdle()) {
-      if (mRunning == false) {
+      if (_mRunning == false) {
         break;
       }
-      mSpringSystem!.loop(mTimeStep);
+      mSpringSystem!.loop(_mTimeStep);
     }
   }
 
-  //@Override
+  @override
   void stop() {
-    mRunning = false;
+    _mRunning = false;
   }
 
   void dispose(){
