@@ -1,44 +1,42 @@
 
 
 
-
-import 'package:flutter/animation.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:rebound_dart/src/SpringLooper.dart';
 
 class AnimationSpringLooper extends SpringLooper {
-  late final AnimationController controller;
-  bool mStarted = false;
-  int mLastTime = 0;
+  late final Ticker _ticker;
+  bool _mStarted = false;
+  int _mLastTime = 0;
 
   AnimationSpringLooper(TickerProvider vsync) {
-    controller = AnimationController(vsync: vsync, duration: Duration(seconds: 1));
-    controller.addListener(() {
-      if (!mStarted || mSpringSystem == null) {
-        return;
-      }
-      int currentTime = DateTime.now().millisecondsSinceEpoch;
-      mSpringSystem!.loop((currentTime - mLastTime).toDouble());
-      mLastTime = currentTime;
-    });
+    _ticker = vsync.createTicker(_tick);
   }
 
-  void start() {
-    if (mStarted) {
+  void _tick(Duration elapsed) {
+    if (!_mStarted || mSpringSystem == null) {
       return;
     }
-    mStarted = true;
-    mLastTime = DateTime.now().millisecondsSinceEpoch;
-    controller.repeat();
+    int now = DateTime.now().millisecondsSinceEpoch;
+    mSpringSystem!.loop((now - _mLastTime).toDouble());
+    _mLastTime = now;
+  }
+  void start() {
+    if (_mStarted) {
+      return;
+    }
+    _mStarted = true;
+    _mLastTime = DateTime.now().millisecondsSinceEpoch;
+    _ticker.start();
   }
 
   void stop() {
-    mStarted = false;
-    controller.stop();
+    _mStarted = false;
+    _ticker.stop();
   }
 
   void dispose() {
-    controller.stop();
-    controller.dispose();
+    _ticker.stop();
+    _ticker.dispose();
   }
 }

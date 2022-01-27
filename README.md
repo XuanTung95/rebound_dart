@@ -2,7 +2,7 @@ Ported from <a href="https://github.com/facebookarchive/rebound">Rebound</a> to 
 Rebound library models spring dynamics. Rebound spring models can be used to create animations that feel natural by introducing real world physics to your application.
   
 <p align='center'>  
-    <img src="https://raw.githubusercontent.com/XuanTung95/rebound_dart/master/demo.gif" width = "280" />  
+    <img src="https://raw.githubusercontent.com/XuanTung95/rebound_dart/master/example/demo.gif" width = "280" />
 </p>
 ## License
 

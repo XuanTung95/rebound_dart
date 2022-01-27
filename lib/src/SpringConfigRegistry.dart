@@ -29,12 +29,12 @@ class SpringConfigRegistry {
     return _INSTANCE;
   }
 
-  final Map<SpringConfig, String> _mSpringConfigMap;
+  final Map<SpringConfig, String> _mSpringConfigMap = new Map<SpringConfig, String>();
 
   /**
    * constructor for the SpringConfigRegistry
    */
-  SpringConfigRegistry(bool includeDefaultEntry) : _mSpringConfigMap = new Map<SpringConfig, String>() {
+  SpringConfigRegistry(bool includeDefaultEntry) {
     if (includeDefaultEntry) {
       addSpringConfig(SpringConfig.defaultConfig, "default config");
     }

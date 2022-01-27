@@ -28,9 +28,9 @@ class Spring {
   static int _ID = 0;
 
   // maximum amount of time to simulate per physics iteration in seconds (4 frames at 60 FPS)
-  static final double _MAX_DELTA_TIME_SEC = 0.064;
+  static const double _MAX_DELTA_TIME_SEC = 0.064;
   // fixed timestep to use in the physics solver in seconds
-  static final double _SOLVER_TIMESTEP_SEC = 0.001;
+  static const double _SOLVER_TIMESTEP_SEC = 0.001;
   late SpringConfig _mSpringConfig;
   bool _mOvershootClampingEnabled = false;
 

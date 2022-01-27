@@ -4,6 +4,7 @@ import 'dart:math';
 import 'dart:ui';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(MyApp());
 }
 
@@ -31,84 +32,99 @@ class MyHomePage extends StatefulWidget {
 }
 
 class SpringChainData {
-  late final Widget _child;
-  double x = 100.0;
-  double y = 100.0;
-  double initialX = 0.0;
-  double initialY = 0.0;
-  double initialTouchX = 0.0;
-  double initialTouchY = 0.0;
-  double scaleX = 1;
-  double scaleY = 1;
-  double HEAD_SIZE = 60;
+  double x = 200.0; // Position Left of widget
+  double y = 200.0; // Position Top of widget
+  double savedX = 0.0; // saved x
+  double savedY = 0.0; // saved y
+  double savedGlobalX = 0.0;
+  double savedGlobalY = 0.0;
+  double widgetSize = 70;
 
-  void setChild(Widget child, {bool isControl = false}) {
-    if (isControl) {
-      _child = GestureDetector(
-        onPanStart: (details) {},
-        onPanDown: (details) {
-          initialX = x;
-          initialY = y;
-          initialTouchX = details.globalPosition.dx;
-          initialTouchY = details.globalPosition.dy;
-          scaleX = 1.1;
-          scaleY = 1.1;
-        },
-        onPanEnd: (details) {
-          var endX = x;
-          var endY = y;
-          var vx = details.velocity.pixelsPerSecond.dx;
-          var vy = details.velocity.pixelsPerSecond.dy;
-          if (vx == 0 && vy == 0) {
-            endX = x;
-            endY = y;
-          } else if (vx == 0) {
-            endX = x;
-            endY = (vy > 0) ? size.height - HEAD_SIZE : 0;
-          } else if (vy == 0) {
-            endY = y;
-            endX = (vx > 0) ? size.width - HEAD_SIZE : 0;
-          } else {
-            double tx =
-            (((vx > 0) ? (size.width - HEAD_SIZE - x) : x) / vx)
-                .abs();
-            double ty =
-            (((vy > 0) ? (size.height - HEAD_SIZE - y) : y) / vy)
-                .abs();
-            if (tx > ty) {
-              endY = ((vy > 0) ? (size.height - HEAD_SIZE) : 0);
-              endX = x + vx * ty;
-            } else if (ty > tx) {
-              endX = (vx > 0) ? (size.width - HEAD_SIZE) : 0;
-              endY = y + vy * tx;
-            } else {
-              endX = (vx > 0) ? (size.width - HEAD_SIZE) : 0;
-              endY = ((vy > 0) ? (size.height - HEAD_SIZE) : 0);
-            }
-          }
-          springX?.setEndValue(endX);
-          springY?.setEndValue(endY);
-          scaleX = 1;
-          scaleY = 1;
-        },
-        onPanUpdate: (details) {
-            springX?.setCurrentValue(
-                initialX + details.globalPosition.dx - initialTouchX);
-            springY?.setCurrentValue(
-                initialY + details.globalPosition.dy - initialTouchY);
-        },
-        child: child,
-      );
-    } else {
-      _child = child;
-    }
-  }
-
-  Widget get child => _child;
-
-  Size size = Size(300, 500);
+  Size outSize = Size(300, 500);
+  Rect inRect = Rect.zero;
+  EdgeInsets padding = EdgeInsets.zero;
   Spring? springX;
   Spring? springY;
+  bool touching = false;
+
+  SpringChainData({required this.outSize, required this.padding}) {
+    _initPosition();
+  }
+
+  void updateSize(Size outSize, EdgeInsets padding) {
+    if (this.outSize == outSize && this.padding == padding) return;
+    this.outSize = outSize;
+    this.padding = padding;
+    _initPosition();
+  }
+
+  void _initPosition() {
+    inRect = Rect.fromLTRB(
+        padding.left,
+        padding.top,
+        outSize.width - padding.right - widgetSize,
+        outSize.height - padding.bottom - widgetSize);
+    x = inRect.right;
+    y = inRect.bottom / 2;
+  }
+
+  void onPanStart(DragStartDetails details) {}
+
+  void onPanDown(DragDownDetails details) {
+    touching = true;
+    savedX = x;
+    savedY = y;
+    savedGlobalX = details.globalPosition.dx;
+    savedGlobalY = details.globalPosition.dy;
+  }
+
+  void onPanEnd(DragEndDetails details) {
+    touching = false;
+    var endX = x;
+    var endY = y;
+    var vx = details.velocity.pixelsPerSecond.dx;
+    var vy = details.velocity.pixelsPerSecond.dy;
+    double tx = 0;
+    if (vx > 0) {
+      tx = ((inRect.right - x) / vx).abs();
+    } else if (vx < 0) {
+      tx = (x / vx).abs();
+    }
+
+    double ty = 0;
+    if (vy > 0) {
+      ty = ((inRect.bottom - y) / vy).abs();
+    } else if (vy < 0) {
+      ty = (y / vy).abs();
+    }
+
+    tx = min(tx, ty);
+    endX += vx * tx;
+    endY += vy * tx;
+
+    if (endX < inRect.left) {
+      endX = inRect.left;
+    }
+    if (endX > inRect.right) {
+      endX = inRect.right;
+    }
+    if (endY < inRect.top) {
+      endY = inRect.top;
+    }
+    if (endY > inRect.bottom) {
+      endY = inRect.bottom;
+    }
+    springX?.setVelocity(vx);
+    springY?.setVelocity(vy);
+    springX?.setEndValue(endX);
+    springY?.setEndValue(endY);
+  }
+
+  void onPanUpdate(DragUpdateDetails details) {
+    // move with finger
+    springX?.setCurrentValue(savedX + details.globalPosition.dx - savedGlobalX);
+    springY?.setCurrentValue(savedY + details.globalPosition.dy - savedGlobalY);
+  }
 }
 
 class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
@@ -121,19 +137,24 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   late SpringChain springChainX;
   late SpringChain springChainY;
   List<SpringChainData> chainData = [];
+  final screenPadding = EdgeInsets.only(top: 30, bottom: 10, left: -5, right: -5);
+  final image1 =
+      'https://upanh123.com/wp-content/uploads/2021/03/anh-dai-dien-ngau7.jpg';
+  final image2 =
+      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQUnGzz2rKplOGt40YoxJpetEVfVK7elg5KvcSiDOrVkcoEF-T-usOSDq5Ti6MtPoWfavQ&usqp=CAU';
 
   void initState() {
     super.initState();
-    Size size = window.physicalSize / window.devicePixelRatio;
-    springData = SpringChainData()
-      ..x=30
-      ..y=30;
-    springData.size = size;
     springSystem = SpringSystem.create(this);
     springX = springSystem.createSpring();
     springY = springSystem.createSpring();
     springX.setSpringConfig(SpringConfigs.NOT_DRAGGING);
     springY.setSpringConfig(SpringConfigs.NOT_DRAGGING);
+    Size size = window.physicalSize / window.devicePixelRatio;
+    springData = SpringChainData(
+        outSize: size,
+        padding: screenPadding);
+
     springX.addListener(SimpleSpringListener(
       updateCallback: (spring) {
         setState(() {
@@ -150,53 +171,31 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     ));
     springData.springX = springX;
     springData.springY = springY;
-    springData.setChild(SizedBox(
-      width: springData.scaleY * springData.HEAD_SIZE,
-      height: springData.scaleY * springData.HEAD_SIZE,
-      child: FloatingActionButton(
-        onPressed: null,
-        child: Icon(
-          Icons.home,
-        ),
-      ),
-    ), isControl: true);
-
 
     // demo Spring chain
     springChainX = SpringChain.create(this);
     springChainY = SpringChain.create(this);
     int maxItem = 5;
-    for(int i=maxItem; i>=0; i--) {
-      Widget child = FloatingActionButton(
-        onPressed: null,
-        backgroundColor: Colors.amber[900],
-        child: Icon(
-          Icons.wifi_tethering,
-        ),
-      );
-      SpringChainData newData = SpringChainData();
-      newData.size = size;
+    for (int i = maxItem; i >= 0; i--) {
+      SpringChainData newData = SpringChainData(
+          outSize: size,
+          padding: screenPadding);
       chainData.add(newData);
-      springChainX.addSpring(SimpleSpringListener(
-        updateCallback: (spring) {
+      springChainX.addSpring(SimpleSpringListener(updateCallback: (spring) {
+        setState(() {
           newData.x = spring.getCurrentValue();
-          setState(() {});
-        }
-      ));
-      springChainY.addSpring(SimpleSpringListener(
-        updateCallback: (spring) {
+        });
+      }));
+      springChainY.addSpring(SimpleSpringListener(updateCallback: (spring) {
+        setState(() {
           newData.y = spring.getCurrentValue();
-          setState(() {});
-        }
-      ));
-      if (i==0) {
+        });
+      }));
+      if (i == 0) {
         springChainX.setControlSpringIndex(maxItem);
         springChainY.setControlSpringIndex(maxItem);
         newData.springX = springChainX.getControlSpring();
         newData.springY = springChainY.getControlSpring();
-        newData.setChild(child, isControl: true);
-      } else {
-        newData.setChild(child, isControl: false);
       }
     }
   }
@@ -211,13 +210,33 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    var size = MediaQuery.of(context).size;
+    if (size != springData.outSize) {
+      springData.updateSize(size, screenPadding);
+      for (var data in chainData) {
+        data.updateSize(size, screenPadding);
+      }
+    }
     return Scaffold(
+      backgroundColor: Colors.black54,
       body: Stack(
         children: [
           Positioned(
               left: springData.x,
               top: springData.y,
-              child: springData.child),
+              child: GestureDetector(
+                  onPanStart: springData.onPanStart,
+                  onPanEnd: springData.onPanEnd,
+                  onPanDown: springData.onPanDown,
+                  onPanUpdate: springData.onPanUpdate,
+                  child: CircleAvatar(
+                    child: ClipOval(
+                        child: Image.network(
+                      image1,
+                      fit: BoxFit.cover,
+                    )),
+                    radius: springData.widgetSize / 2,
+                  ))),
           if (chainData.isNotEmpty) ...buildChain(),
         ],
       ), // This trailing comma makes auto-formatting nicer for build methods.
@@ -226,29 +245,44 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
   List<Widget> buildChain() {
     List<Widget> ret = [];
-    chainData.forEach((data) {
+    for (int i = 0; i < chainData.length; i++) {
+      var data = chainData[i];
+      Widget widget = CircleAvatar(
+        backgroundColor: Colors.white,
+        child: ClipOval(
+            child: Image.network(
+          i >= 3 ? image2 : image1,
+          fit: BoxFit.cover,
+        )),
+        radius: data.widgetSize / 2,
+      );
       ret.add(Positioned(
           left: data.x,
           top: data.y,
-          child: SizedBox(
-              width: data.scaleY * data.HEAD_SIZE,
-              height: data.scaleY * data.HEAD_SIZE,
-              child: data.child)));
-    });
+          child: i < (chainData.length - 1)
+              ? widget
+              : GestureDetector(
+                  onPanStart: data.onPanStart,
+                  onPanEnd: data.onPanEnd,
+                  onPanDown: data.onPanDown,
+                  onPanUpdate: data.onPanUpdate,
+                  child: widget)));
+    }
     return ret;
   }
 }
 
 class SpringConfigs {
-  static SpringConfig NOT_DRAGGING =
+  static final SpringConfig NOT_DRAGGING =
       SpringConfig.fromOrigamiTensionAndFriction(40.0, 4.5); // (60.0, 7.5)
-  static SpringConfig CAPTURING =
+  static final SpringConfig CAPTURING =
       SpringConfig.fromBouncinessAndSpeed(8.0, 40.0);
-  static SpringConfig CLOSE_SCALE =
+  static final SpringConfig CLOSE_SCALE =
       SpringConfig.fromBouncinessAndSpeed(7.0, 25.0);
-  static SpringConfig CLOSE_Y = SpringConfig.fromBouncinessAndSpeed(3.0, 3.0);
-  static SpringConfig DRAGGING =
+  static final SpringConfig CLOSE_Y =
+      SpringConfig.fromBouncinessAndSpeed(3.0, 3.0);
+  static final SpringConfig DRAGGING =
       SpringConfig.fromOrigamiTensionAndFriction(0.0, 5.0);
-  static SpringConfig CONTENT_SCALE =
+  static final SpringConfig CONTENT_SCALE =
       SpringConfig.fromBouncinessAndSpeed(5.0, 40.0);
 }

@@ -87,7 +87,8 @@ class BaseSpringSystem {
    */
   void registerSpring(Spring spring) {
     if (_mSpringRegistry.containsKey(spring.getId())) {
-      throw new Exception("spring is already registered"); }
+      throw new Exception("spring is already registered");
+    }
     _mSpringRegistry[spring.getId()] = spring;
   }
 
@@ -117,12 +118,14 @@ class BaseSpringSystem {
       }
     }
     */
-    _mActiveSprings.removeWhere((spring) => !spring.systemShouldAdvance());
-    if (_mActiveSprings.isNotEmpty) {
-      List<Spring> toAdvance = List.from(_mActiveSprings);
-      toAdvance.forEach((spring) {
+    if (_mActiveSprings.isEmpty) return;
+    var copyList = _mActiveSprings.toList(growable: false);
+    for (Spring spring in copyList) {
+      if (spring.systemShouldAdvance()) {
         spring.advance(deltaTime / 1000.0);
-      });
+      } else {
+        _mActiveSprings.remove(spring);
+      }
     }
   }
 

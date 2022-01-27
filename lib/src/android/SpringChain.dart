@@ -62,7 +62,7 @@ class SpringChain implements SpringListener {
       {   double mainTension = _DEFAULT_MAIN_TENSION,
           double mainFriction = _DEFAULT_MAIN_FRICTION,
           double attachmentTension = _DEFAULT_ATTACHMENT_TENSION,
-          double attachmentFriction = _DEFAULT_ATTACHMENT_FRICTION}) {
+          double attachmentFriction = _DEFAULT_ATTACHMENT_FRICTION  }) {
     return new SpringChain(vsync, mainTension: mainTension, mainFriction: mainFriction, attachmentTension: attachmentTension, attachmentFriction: attachmentFriction);
   }
 
@@ -89,11 +89,10 @@ class SpringChain implements SpringListener {
   }*/
 
   SpringChain(TickerProvider vsync,
-  {
-      double mainTension = _DEFAULT_MAIN_TENSION,
+  {   double mainTension = _DEFAULT_MAIN_TENSION,
       double mainFriction = _DEFAULT_MAIN_FRICTION,
       double attachmentTension = _DEFAULT_ATTACHMENT_TENSION,
-      double attachmentFriction = _DEFAULT_ATTACHMENT_FRICTION}) {
+      double attachmentFriction = _DEFAULT_ATTACHMENT_FRICTION  }) {
     _mSpringSystem = SpringSystem.create(vsync);
     _mMainSpringConfig = SpringConfig.fromOrigamiTensionAndFriction(mainTension, mainFriction);
     _mAttachmentSpringConfig =

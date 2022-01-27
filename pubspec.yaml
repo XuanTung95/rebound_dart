@@ -1,5 +1,5 @@
 name: rebound_dart
-description: Ported from https://github.com/facebookarchive/rebound to Dart. Rebound library models spring dynamics. Rebound spring models can be used to create animations that feel natural by introducing real world physics to your application.
+description: Rebound library models spring dynamics. Rebound spring models can be used to create animations that feel natural by introducing real world physics to your application.
 
 # The following line prevents the package from being accidentally published to
 # pub.dev using `pub publish`. This is preferred for private packages.
