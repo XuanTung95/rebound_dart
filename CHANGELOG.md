@@ -7,3 +7,8 @@
 * Fix bug
 * Add SpringChain
 * Update example
+
+## [0.3.0] - (2022-Jan-27)
+
+* Refactoring code
+* Update example
